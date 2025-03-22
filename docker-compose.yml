@@ -1,0 +1,37 @@
+services:
+  serasa-app:
+    container_name: serasa-app
+    build: .
+    ports:
+      - '3000:3000'
+    command: >
+      sh -c "pnpm install && pnpm run start:dev"
+    depends_on:
+      - postgres-serasa
+    volumes:
+      - ./:/app
+      - /app/node_modules
+
+  postgres-serasa:
+    image: postgres:16
+    container_name: postgres-serasa
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: serasa-agro
+    ports:
+      - '5432:5432'
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin-container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - '5555:80'
+    depends_on:
+      - postgres-serasa
+
+volumes:
+  postgres_data:
