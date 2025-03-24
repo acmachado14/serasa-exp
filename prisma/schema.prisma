@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Producer {
+  id           String       @id @default(uuid())
+  cpfCnpj     String       @unique @db.VarChar(14)
+  name         String       @db.VarChar(255)
+  properties   Property[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  deletedAt   DateTime?
+
+  @@map("producers")
+}
+
+model Property {
+  id                String    @id @default(uuid())
+  name              String    @db.VarChar(255)
+  city              String    @db.VarChar(255)
+  state             String    @db.VarChar(2)
+  totalArea        Int
+  agriculturalArea Int
+  vegetationArea   Int
+  producerId       String
+  producer          Producer  @relation(fields: [producerId], references: [id])
+  harvests         Harvest[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  deletedAt        DateTime?
+
+  @@map("properties")
+}
+
+model Harvest {
+  id           String     @id @default(uuid())
+  year         Int
+  propertyId   String
+  property     Property   @relation(fields: [propertyId], references: [id])
+  crops        Crop[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
+  deletedAt   DateTime?
+
+  @@map("harvests")
+}
+
+model Crop {
+  id         String    @id @default(uuid())
+  name       String    @db.VarChar(255)
+  harvestId String
+  harvest    Harvest   @relation(fields: [harvestId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+
+  @@map("crops")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+} 
