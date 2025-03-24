@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'serasa-app'
+    static_configs:
+      - targets: ['serasa-app:3000']
