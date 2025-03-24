@@ -97,6 +97,8 @@ O projeto inclui integração com Prometheus para coleta de métricas:
 
 - API: [https://api.serasa.gelin.fun](https://api.serasa.gelin.fun)
 - Grafana: [https://grafana.serasa.gelin.fun](https://grafana.serasa.gelin.fun)
+  - Login: admin
+  - Senha: puRbew-qyftur-0vadri
 
 ### Processo de Deploy
 
