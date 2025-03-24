@@ -2,10 +2,7 @@ name: Deploy Dev
 
 on:
   push:
-    branches: [dev]
-    paths:
-      - '**/backend/**'
-      - '.github/workflows/deploy-dev.yml'
+    branches: [main]
 
 jobs:
   build:
@@ -16,11 +13,9 @@ jobs:
       - name: Login to docker hub
         run: docker login -u acmachado14 -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Build docker image
-        run: |
-          docker build -f Dockerfile -t acmachado14/serasa-app:latest .
+        run: docker build -f Dockerfile -t acmachado14/serasa-app:latest .
       - name: Publish image to docker hub
-        run: |
-          docker push acmachado14/serasa-app:latest
+        run: docker push acmachado14/serasa-app:latest
 
   test:
     needs: build
