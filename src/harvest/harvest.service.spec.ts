@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HarvestService } from './harvest.service';
 import { HarvestRepository } from './harvest.repository';
 import { PropertyRepository } from '../property/property.repository';
+import { EncryptionService } from '../utils/encryption';
 import { NotFoundException } from '@nestjs/common';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { CreateCropDto } from './dto/create-crop.dto';
@@ -26,6 +27,11 @@ describe('HarvestService', () => {
     findById: jest.fn(),
   };
 
+  const mockEncryptionService = {
+    encrypt: jest.fn(),
+    decrypt: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,6 +43,10 @@ describe('HarvestService', () => {
         {
           provide: PropertyRepository,
           useValue: mockPropertyRepository,
+        },
+        {
+          provide: EncryptionService,
+          useValue: mockEncryptionService,
         },
       ],
     }).compile();

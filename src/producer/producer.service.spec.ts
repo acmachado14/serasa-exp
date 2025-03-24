@@ -3,10 +3,12 @@ import { ProducerService } from './producer.service';
 import { ProducerRepository } from './producer.repository';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateProducerDto } from './dto/create-producer.dto';
+import { EncryptionService } from '../utils/encryption';
 
 describe('ProducerService', () => {
   let service: ProducerService;
   let repository: ProducerRepository;
+  let encryptionService: EncryptionService;
 
   const mockProducerRepository = {
     create: jest.fn(),
@@ -14,6 +16,11 @@ describe('ProducerService', () => {
     findById: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+  };
+
+  const mockEncryptionService = {
+    encrypt: jest.fn().mockImplementation((text) => text),
+    decrypt: jest.fn().mockImplementation((text) => text),
   };
 
   beforeEach(async () => {
@@ -24,11 +31,16 @@ describe('ProducerService', () => {
           provide: ProducerRepository,
           useValue: mockProducerRepository,
         },
+        {
+          provide: EncryptionService,
+          useValue: mockEncryptionService,
+        },
       ],
     }).compile();
 
     service = module.get<ProducerService>(ProducerService);
     repository = module.get<ProducerRepository>(ProducerRepository);
+    encryptionService = module.get<EncryptionService>(EncryptionService);
   });
 
   it('should be defined', () => {
@@ -53,6 +65,12 @@ describe('ProducerService', () => {
       expect(result.name).toBe(createProducerDto.name);
       expect(result.cpfCnpj).toBe(createProducerDto.cpfCnpj);
       expect(repository.create).toHaveBeenCalledWith(createProducerDto);
+      expect(encryptionService.encrypt).toHaveBeenCalledWith(
+        createProducerDto.cpfCnpj,
+      );
+      expect(encryptionService.decrypt).toHaveBeenCalledWith(
+        createProducerDto.cpfCnpj,
+      );
     });
 
     it('should throw BadRequestException for invalid CPF/CNPJ', async () => {
@@ -81,6 +99,7 @@ describe('ProducerService', () => {
 
       expect(result).toBeDefined();
       expect(result).toEqual(producer);
+      expect(encryptionService.decrypt).toHaveBeenCalledWith(producer.cpfCnpj);
     });
 
     it('should throw NotFoundException when producer not found', async () => {
@@ -113,6 +132,12 @@ describe('ProducerService', () => {
       expect(result).toBeDefined();
       expect(result.name).toBe(updateData.name);
       expect(result.cpfCnpj).toBe(updateData.cpfCnpj);
+      expect(encryptionService.encrypt).toHaveBeenCalledWith(
+        updateData.cpfCnpj,
+      );
+      expect(encryptionService.decrypt).toHaveBeenCalledWith(
+        updateData.cpfCnpj,
+      );
     });
 
     it('should throw BadRequestException for invalid CPF/CNPJ', async () => {
@@ -134,14 +159,15 @@ describe('ProducerService', () => {
 
   describe('remove', () => {
     it('should soft delete a producer', async () => {
-      mockProducerRepository.findById.mockResolvedValue({
+      const producer = {
         id: '1',
         name: 'Test Producer',
         cpfCnpj: '12345678901',
-      });
+      };
 
+      mockProducerRepository.findById.mockResolvedValue(producer);
       mockProducerRepository.softDelete.mockResolvedValue({
-        id: '1',
+        ...producer,
         deletedAt: new Date(),
       });
 
@@ -150,6 +176,7 @@ describe('ProducerService', () => {
       expect(result).toBeDefined();
       expect(result.deletedAt).toBeDefined();
       expect(repository.softDelete).toHaveBeenCalledWith('1');
+      expect(encryptionService.decrypt).toHaveBeenCalledWith(producer.cpfCnpj);
     });
   });
 });

@@ -26,15 +26,18 @@ export class PropertyService {
       );
     }
 
-    if (!(await this.producerRepository.findById(data.producerId))) {
+    const producer = await this.producerRepository.findById(data.producerId);
+    if (!producer) {
       throw new BadRequestException('Produtor não existente');
     }
 
     const property = await this.propertyRepository.create(data);
 
-    property.producer.cpfCnpj = this.encryptionService.decrypt(
-      property.producer.cpfCnpj,
-    );
+    if (property.producer) {
+      property.producer.cpfCnpj = this.encryptionService.decrypt(
+        property.producer.cpfCnpj,
+      );
+    }
 
     return property;
   }
@@ -42,11 +45,15 @@ export class PropertyService {
   async filterProperty(filters: FiltersPropertyDto, orders?: OrderPropertyDto) {
     const properties = await this.propertyRepository.findAll(filters, orders);
 
-    properties.data.forEach((property) => {
-      property.producer.cpfCnpj = this.encryptionService.decrypt(
-        property.producer.cpfCnpj,
-      );
-    });
+    if (properties.data) {
+      properties.data.forEach((property) => {
+        if (property.producer) {
+          property.producer.cpfCnpj = this.encryptionService.decrypt(
+            property.producer.cpfCnpj,
+          );
+        }
+      });
+    }
 
     return properties;
   }
@@ -58,9 +65,11 @@ export class PropertyService {
       throw new NotFoundException('Propriedade não encontrada');
     }
 
-    property.producer.cpfCnpj = this.encryptionService.decrypt(
-      property.producer.cpfCnpj,
-    );
+    if (property.producer) {
+      property.producer.cpfCnpj = this.encryptionService.decrypt(
+        property.producer.cpfCnpj,
+      );
+    }
 
     return property;
   }
@@ -80,15 +89,18 @@ export class PropertyService {
     }
 
     const producerId = data.producerId ?? property.producerId;
-    if (!(await this.producerRepository.findById(producerId))) {
+    const producer = await this.producerRepository.findById(producerId);
+    if (!producer) {
       throw new BadRequestException('Produtor não existente');
     }
 
     const propertyUpdated = await this.propertyRepository.update(id, data);
 
-    propertyUpdated.producer.cpfCnpj = this.encryptionService.decrypt(
-      property.producer.cpfCnpj,
-    );
+    if (propertyUpdated.producer) {
+      propertyUpdated.producer.cpfCnpj = this.encryptionService.decrypt(
+        propertyUpdated.producer.cpfCnpj,
+      );
+    }
 
     return propertyUpdated;
   }
@@ -98,9 +110,11 @@ export class PropertyService {
 
     const propertyRemoved = await this.propertyRepository.softDelete(id);
 
-    propertyRemoved.producer.cpfCnpj = this.encryptionService.decrypt(
-      propertyRemoved.producer.cpfCnpj,
-    );
+    if (propertyRemoved.producer) {
+      propertyRemoved.producer.cpfCnpj = this.encryptionService.decrypt(
+        propertyRemoved.producer.cpfCnpj,
+      );
+    }
 
     return propertyRemoved;
   }
