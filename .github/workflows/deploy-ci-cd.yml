@@ -1,0 +1,40 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '**/backend/**'
+      - '.github/workflows/deploy-dev.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Login to docker hub
+        run: docker login -u acmachado14 -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build docker image
+        run: |
+          docker build -f Dockerfile -t acmachado14/serasa-app:latest .
+      - name: Publish image to docker hub
+        run: |
+          docker push acmachado14/serasa-app:latest
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run tests
+      run: docker compose run --rm serasa-test
+  
+  deploy:
+    needs: build
+    runs-on: serasa-exp
+    steps:
+      - name: Run Script to Deploy without downtime
+        run: |
+          cd /home/contato_verifycar/serasa
+          ./deploy.sh ${{ secrets.DOCKER_PASSWORD }}
