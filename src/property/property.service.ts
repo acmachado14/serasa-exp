@@ -5,14 +5,17 @@ import {
 } from '@nestjs/common';
 import { PropertyRepository } from './property.repository';
 import { CreatePropertyDto } from './dto/create-property.dto';
-
-import { Prisma } from '@prisma/client';
-import { FiltersAndOrdersPropertyDto } from './dto/filter-and-orders-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { ProducerRepository } from 'src/producer/producer.repository';
+import { FiltersPropertyDto } from './dto/filters-property.dto';
+import { OrderPropertyDto } from './dto/filter-and-orders-property.dto';
 
 @Injectable()
 export class PropertyService {
-  constructor(private propertyRepository: PropertyRepository) {}
+  constructor(
+    private propertyRepository: PropertyRepository,
+    private producerRepository: ProducerRepository,
+  ) {}
 
   async create(data: CreatePropertyDto) {
     if (data.agriculturalArea + data.vegetationArea > data.totalArea) {
@@ -21,38 +24,15 @@ export class PropertyService {
       );
     }
 
-    return this.propertyRepository.create(data);
+    if (!(await this.producerRepository.findById(data.producerId))) {
+      throw new BadRequestException('Produtor não existente');
+    }
+
+    return await this.propertyRepository.create(data);
   }
 
-  async filterProperty(query: FiltersAndOrdersPropertyDto) {
-    const { page = 1, limit = 10, orders, ...filters } = query;
-    const skip = (page - 1) * limit;
-
-    const where: Prisma.PropertyWhereInput = {
-      deletedAt: null,
-      ...(filters.name && {
-        name: {
-          contains: filters.name,
-          mode: Prisma.QueryMode.insensitive,
-        },
-      }),
-      ...(filters.city && {
-        city: {
-          contains: filters.city,
-          mode: Prisma.QueryMode.insensitive,
-        },
-      }),
-      ...(filters.state && { state: filters.state }),
-    };
-
-    const orderBy: Prisma.PropertyOrderByWithRelationInput = {
-      ...(orders?.name && { name: orders.name }),
-      ...(orders?.city && { city: orders.city }),
-      ...(orders?.state && { state: orders.state }),
-      ...(orders?.createdAt && { created_at: orders.createdAt }),
-    };
-
-    return this.propertyRepository.findAll(where, orderBy, skip, limit);
+  async filterProperty(filters: FiltersPropertyDto, orders?: OrderPropertyDto) {
+    return this.propertyRepository.findAll(filters, orders);
   }
 
   async findOne(id: string) {
@@ -79,11 +59,16 @@ export class PropertyService {
       );
     }
 
-    return this.propertyRepository.update(id, data);
+    const producerId = data.producerId ?? property.producerId;
+    if (!(await this.producerRepository.findById(producerId))) {
+      throw new BadRequestException('Produtor não existente');
+    }
+
+    return await this.propertyRepository.update(id, data);
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.propertyRepository.softDelete(id);
+    return await this.propertyRepository.softDelete(id);
   }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateProducerDto } from './dto/create-producer.dto';
+import { FiltersAndOrdersProducerDto } from './dto/filter-and-orders-producer.dto';
 
 @Injectable()
 export class ProducerRepository {
@@ -47,7 +48,7 @@ export class ProducerRepository {
 
   async findById(id: string) {
     return this.prisma.producer.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         properties: true,
       },
@@ -76,12 +77,36 @@ export class ProducerRepository {
     });
   }
 
-  async filterProducer(
-    where: Prisma.ProducerWhereInput,
-    orderBy: Prisma.ProducerOrderByWithRelationInput,
-    skip: number,
-    take: number,
-  ) {
+  async filterProducer(query: FiltersAndOrdersProducerDto) {
+    const { page = 1, limit = 10, orders, ...filters } = query;
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const where: Prisma.ProducerWhereInput = {
+      deletedAt: null,
+      ...(filters.name && {
+        name: {
+          contains: filters.name,
+          mode: Prisma.QueryMode.insensitive,
+        },
+      }),
+      ...(filters.cpfCnpj && {
+        cpf_cnpj: filters.cpfCnpj,
+      }),
+    };
+
+    const orderBy: Prisma.ProducerOrderByWithRelationInput = {
+      ...(orders?.cpfCnpj && { cpfCnpj: orders.cpfCnpj }),
+      ...(orders?.name && { name: orders.name }),
+      ...(orders?.createdAt && { created_at: orders.createdAt }),
+      ...(orders?.updatedAt && { updated_at: orders.updatedAt }),
+      ...(orders?.deletedAt && { deleted_at: orders.deletedAt }),
+    };
+
+    if (Object.keys(orderBy).length === 0) {
+      orderBy.createdAt = 'desc';
+    }
+
     const [producers, total] = await Promise.all([
       this.prisma.producer.findMany({
         where,

@@ -1,19 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsOptional,
-  IsString,
-  IsInt,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import { OrderPropertyDto } from './orders-property.dto';
-import { FiltersPropertyDto } from './filters-property.dto';
+import { IsOptional } from 'class-validator';
 
-export class FiltersAndOrdersPropertyDto extends FiltersPropertyDto {
+export class OrderPropertyDto {
   @ApiProperty({ required: false })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => OrderPropertyDto)
-  orders?: OrderPropertyDto;
+  name?: 'asc' | 'desc';
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  city?: 'asc' | 'desc';
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  state?: 'asc' | 'desc';
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  createdAt?: 'asc' | 'desc';
 }

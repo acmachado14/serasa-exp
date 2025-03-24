@@ -10,13 +10,14 @@ import {
   UseGuards,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { PropertyResponseDto } from './dto/property-response.dto';
-import { FiltersAndOrdersPropertyDto } from './dto/filter-and-orders-property.dto';
+import { OrderPropertyDto } from './dto/filter-and-orders-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { FiltersPropertyDto } from './dto/filters-property.dto';
 
 @ApiTags('Properties')
 @ApiBearerAuth()
@@ -50,11 +51,20 @@ export class PropertyController {
     }
   }
 
-  @Get('filter')
   @ApiResponse({ type: PropertyResponseDto })
-  async filter(@Query() query: FiltersAndOrdersPropertyDto) {
+  @Get('filter')
+  async filter(@Query() query: { filters: string; orders?: string }) {
     try {
-      const result = await this.propertyService.filterProperty(query);
+      const parsedFilters: FiltersPropertyDto = JSON.parse(query.filters);
+      const parsedOrders: OrderPropertyDto = query.orders
+        ? JSON.parse(query.orders)
+        : {};
+
+      const result = await this.propertyService.filterProperty(
+        parsedFilters,
+        parsedOrders,
+      );
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Propriedades filtradas com sucesso',
