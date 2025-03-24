@@ -8,6 +8,7 @@ export class HarvestRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
+    
     return await this.prisma.harvest.create({
       data: {
         year: createHarvestDto.year,

@@ -9,21 +9,36 @@ import { CreateProducerDto } from './dto/create-producer.dto';
 import { UpdateProducerDto } from './dto/update-producer.dto';
 import { FiltersProducerDto } from './dto/filters-producer.dto';
 import { OrderProducerDto } from './dto/orders-producer.dto';
+import { EncryptionService } from 'src/utils/encryption';
 
 @Injectable()
 export class ProducerService {
-  constructor(private producerRepository: ProducerRepository) {}
+  constructor(
+    private producerRepository: ProducerRepository,
+    private encryptionService: EncryptionService,
+  ) {}
 
   async create(data: CreateProducerDto) {
     if (!ValidateCpfCnpj.isValid(data.cpfCnpj)) {
       throw new BadRequestException('CPF/CNPJ inválido');
     }
-
-    return this.producerRepository.create(data);
+    data.cpfCnpj = this.encryptionService.encrypt(data.cpfCnpj);
+    const producer = await this.producerRepository.create(data);
+    producer.cpfCnpj = this.encryptionService.decrypt(producer.cpfCnpj);
+    return producer;
   }
 
   async filterProducer(filters: FiltersProducerDto, orders: OrderProducerDto) {
-    return this.producerRepository.filterProducer(filters, orders);
+    const produceres = await this.producerRepository.filterProducer(
+      filters,
+      orders,
+    );
+
+    produceres.data.forEach((producer) => {
+      producer.cpfCnpj = this.encryptionService.decrypt(producer.cpfCnpj);
+    });
+
+    return produceres;
   }
 
   async findOne(id: string) {
@@ -33,6 +48,7 @@ export class ProducerService {
       throw new NotFoundException('Produtor não encontrado');
     }
 
+    producer.cpfCnpj = this.encryptionService.decrypt(producer.cpfCnpj);
     return producer;
   }
 
@@ -41,13 +57,20 @@ export class ProducerService {
       throw new BadRequestException('CPF/CNPJ inválido');
     }
 
-    await this.findOne(id);
+    if (data.cpfCnpj) {
+      data.cpfCnpj = this.encryptionService.encrypt(data.cpfCnpj);
+    }
 
-    return this.producerRepository.update(id, data);
+    await this.findOne(id);
+    const producer = await this.producerRepository.update(id, data);
+    producer.cpfCnpj = this.encryptionService.decrypt(producer.cpfCnpj);
+    return producer;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.producerRepository.softDelete(id);
+    const producer = await this.producerRepository.softDelete(id);
+    producer.cpfCnpj = this.encryptionService.decrypt(producer.cpfCnpj);
+    return producer;
   }
 }

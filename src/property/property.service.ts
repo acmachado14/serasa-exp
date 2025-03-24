@@ -9,12 +9,14 @@ import { UpdatePropertyDto } from './dto/update-property.dto';
 import { ProducerRepository } from 'src/producer/producer.repository';
 import { FiltersPropertyDto } from './dto/filters-property.dto';
 import { OrderPropertyDto } from './dto/filter-and-orders-property.dto';
+import { EncryptionService } from 'src/utils/encryption';
 
 @Injectable()
 export class PropertyService {
   constructor(
     private propertyRepository: PropertyRepository,
     private producerRepository: ProducerRepository,
+    private encryptionService: EncryptionService,
   ) {}
 
   async create(data: CreatePropertyDto) {
@@ -28,11 +30,25 @@ export class PropertyService {
       throw new BadRequestException('Produtor não existente');
     }
 
-    return await this.propertyRepository.create(data);
+    const property = await this.propertyRepository.create(data);
+
+    property.producer.cpfCnpj = this.encryptionService.decrypt(
+      property.producer.cpfCnpj,
+    );
+
+    return property;
   }
 
   async filterProperty(filters: FiltersPropertyDto, orders?: OrderPropertyDto) {
-    return this.propertyRepository.findAll(filters, orders);
+    const properties = await this.propertyRepository.findAll(filters, orders);
+
+    properties.data.forEach((property) => {
+      property.producer.cpfCnpj = this.encryptionService.decrypt(
+        property.producer.cpfCnpj,
+      );
+    });
+
+    return properties;
   }
 
   async findOne(id: string) {
@@ -41,6 +57,10 @@ export class PropertyService {
     if (!property || property.deletedAt) {
       throw new NotFoundException('Propriedade não encontrada');
     }
+
+    property.producer.cpfCnpj = this.encryptionService.decrypt(
+      property.producer.cpfCnpj,
+    );
 
     return property;
   }
@@ -64,11 +84,24 @@ export class PropertyService {
       throw new BadRequestException('Produtor não existente');
     }
 
-    return await this.propertyRepository.update(id, data);
+    const propertyUpdated = await this.propertyRepository.update(id, data);
+
+    propertyUpdated.producer.cpfCnpj = this.encryptionService.decrypt(
+      property.producer.cpfCnpj,
+    );
+
+    return propertyUpdated;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return await this.propertyRepository.softDelete(id);
+
+    const propertyRemoved = await this.propertyRepository.softDelete(id);
+
+    propertyRemoved.producer.cpfCnpj = this.encryptionService.decrypt(
+      propertyRemoved.producer.cpfCnpj,
+    );
+
+    return propertyRemoved;
   }
 }
