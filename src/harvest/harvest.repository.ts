@@ -8,7 +8,7 @@ export class HarvestRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
-    return this.prisma.harvest.create({
+    return await this.prisma.harvest.create({
       data: {
         year: createHarvestDto.year,
         propertyId: createHarvestDto.propertyId,
@@ -21,7 +21,7 @@ export class HarvestRepository {
   }
 
   async findAll(propertyId?: string) {
-    return this.prisma.harvest.findMany({
+    return await this.prisma.harvest.findMany({
       where: {
         ...(propertyId ? { propertyId } : {}),
         deletedAt: null,
@@ -55,7 +55,7 @@ export class HarvestRepository {
   }
 
   async remove(id: string) {
-    return this.prisma.harvest.update({
+    return await this.prisma.harvest.update({
       where: { id },
       data: {
         deletedAt: new Date(),
@@ -64,7 +64,7 @@ export class HarvestRepository {
   }
 
   async addCrop(createCropDto: CreateCropDto) {
-    return this.prisma.crop.create({
+    return await this.prisma.crop.create({
       data: {
         name: createCropDto.name,
         harvestId: createCropDto.harvestId,
@@ -118,7 +118,7 @@ export class HarvestRepository {
   }
 
   async findOneCrop(id: string) {
-    return this.prisma.crop.findUnique({
+    return await this.prisma.crop.findUnique({
       where: {
         id,
         deletedAt: null,

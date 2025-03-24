@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateProducerDto } from './dto/create-producer.dto';
-import { FiltersAndOrdersProducerDto } from './dto/filter-and-orders-producer.dto';
+import { OrderProducerDto } from './dto/orders-producer.dto';
+import { FiltersProducerDto } from './dto/filters-producer.dto';
 
 @Injectable()
 export class ProducerRepository {
@@ -77,8 +78,8 @@ export class ProducerRepository {
     });
   }
 
-  async filterProducer(query: FiltersAndOrdersProducerDto) {
-    const { page = 1, limit = 10, orders, ...filters } = query;
+  async filterProducer(filters: FiltersProducerDto, orders: OrderProducerDto) {
+    const { page = 1, limit = 10 } = filters;
     const skip = (page - 1) * limit;
     const take = limit;
 

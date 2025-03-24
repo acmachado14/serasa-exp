@@ -5,8 +5,10 @@ import {
 } from '@nestjs/common';
 import { ProducerRepository } from './producer.repository';
 import { ValidateCpfCnpj } from 'src/utils/validate-cpf-cnpj';
-import { FiltersAndOrdersProducerDto } from './dto/filter-and-orders-producer.dto';
 import { CreateProducerDto } from './dto/create-producer.dto';
+import { UpdateProducerDto } from './dto/update-producer.dto';
+import { FiltersProducerDto } from './dto/filters-producer.dto';
+import { OrderProducerDto } from './dto/orders-producer.dto';
 
 @Injectable()
 export class ProducerService {
@@ -20,8 +22,8 @@ export class ProducerService {
     return this.producerRepository.create(data);
   }
 
-  async filterProducer(query: FiltersAndOrdersProducerDto) {
-    return this.producerRepository.filterProducer(query);
+  async filterProducer(filters: FiltersProducerDto, orders: OrderProducerDto) {
+    return this.producerRepository.filterProducer(filters, orders);
   }
 
   async findOne(id: string) {
@@ -34,8 +36,8 @@ export class ProducerService {
     return producer;
   }
 
-  async update(id: string, data: { cpf_cnpj?: string; name?: string }) {
-    if (data.cpf_cnpj && !ValidateCpfCnpj.isValid(data.cpf_cnpj)) {
+  async update(id: string, data: UpdateProducerDto) {
+    if (data.cpfCnpj && !ValidateCpfCnpj.isValid(data.cpfCnpj)) {
       throw new BadRequestException('CPF/CNPJ inválido');
     }
 

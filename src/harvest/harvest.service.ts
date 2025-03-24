@@ -2,17 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { HarvestRepository } from './harvest.repository';
+import { PropertyRepository } from '../property/property.repository';
 
 @Injectable()
 export class HarvestService {
-  constructor(private readonly harvestRepository: HarvestRepository) {}
+  constructor(
+    private readonly harvestRepository: HarvestRepository,
+    private readonly propertyRepository: PropertyRepository,
+  ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
-    return this.harvestRepository.create(createHarvestDto);
+    const property = await this.propertyRepository.findById(
+      createHarvestDto.propertyId,
+    );
+
+    if (!property) {
+      throw new NotFoundException('Propriedade não encontrada');
+    }
+
+    return await this.harvestRepository.create(createHarvestDto);
   }
 
   async findAll(propertyId?: string) {
-    return this.harvestRepository.findAll(propertyId);
+    return await this.harvestRepository.findAll(propertyId);
   }
 
   async findOne(id: string) {
@@ -27,7 +39,7 @@ export class HarvestService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.harvestRepository.remove(id);
+    return await this.harvestRepository.remove(id);
   }
 
   async addCrop(createCropDto: CreateCropDto) {
@@ -37,11 +49,11 @@ export class HarvestService {
 
   async removeCrop(id: string) {
     await this.findOneCrop(id);
-    return this.harvestRepository.removeCrop(id);
+    return await this.harvestRepository.removeCrop(id);
   }
 
   async getDashboardData() {
-    return this.harvestRepository.getDashboardData();
+    return await this.harvestRepository.getDashboardData();
   }
 
   async findOneCrop(id: string) {

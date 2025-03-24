@@ -16,7 +16,8 @@ import { ProducerService } from './producer.service';
 import { CreateProducerDto } from './dto/create-producer.dto';
 import { UpdateProducerDto } from './dto/update-producer.dto';
 import { ProducerResponseDto } from './dto/producer-response.dto';
-import { FiltersAndOrdersProducerDto } from './dto/filter-and-orders-producer.dto';
+import { FiltersProducerDto } from './dto/filters-producer.dto';
+import { OrderProducerDto } from './dto/orders-producer.dto';
 
 @ApiTags('Producers')
 @ApiBearerAuth()
@@ -55,13 +56,23 @@ export class ProducerController {
 
   @ApiResponse({ type: ProducerResponseDto })
   @Get('filter')
-  async filter(@Query() query: FiltersAndOrdersProducerDto) {
+  async filter(@Query() query: { filters: string; orders?: string }) {
     try {
-      const result = await this.producerService.filterProducer(query);
+      const parsedFilters: FiltersProducerDto = JSON.parse(query.filters);
+      const parsedOrders: OrderProducerDto = query.orders
+        ? JSON.parse(query.orders)
+        : {};
+
+      const result = await this.producerService.filterProducer(
+        parsedFilters,
+        parsedOrders,
+      );
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Produtores filtrados com sucesso',
-        data: result,
+        data: result.data,
+        meta: result.meta,
         error: null,
       };
     } catch (error) {
